@@ -1,13 +1,11 @@
-# script/example/main.py
-# 示例脚本
-# 本脚本写好了基本的函数，直接在函数中编写逻辑即可，必要的时候可以修改函数名
-# 注意：Example 是具体功能，请根据实际情况一键替换即可
-# 注意：function 是函数名称，请根据实际情况一键替换即可
+# script/ImageGenerate/main.py
 
 import logging
 import os
 import sys
-import asyncio
+import re
+from PIL import Image, ImageDraw, ImageFont
+
 
 # 添加项目根目录到sys.path
 sys.path.append(
@@ -18,11 +16,21 @@ from app.config import owner_id
 from app.api import *
 from app.switch import load_switch, save_switch
 
-# 数据存储路径，实际开发时，请将Example替换为具体的数据存放路径
-DATA_DIR = os.path.join(
+# 输入图片路径
+INPUT_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "data",
-    "Example",
+    "scripts",
+    "ImageGenerate",
+    "input",
+)
+
+
+# 输出图片路径
+OUTPUT_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "scripts",
+    "ImageGenerate",
+    "output",
 )
 
 
@@ -36,50 +44,122 @@ def save_function_status(group_id, status):
     save_switch(group_id, "function_status", status)
 
 
+# 狂粉添加居中文字
+async def add_centered_text(text="W1ndys"):
+    img_path = os.path.join(INPUT_DIR, "love.png")
+    box = (257, 21, 724, 252)
+    font_path = "/usr/share/fonts/truetype/win/SIMHEI.TTF"  # 使用中文字体
+    initial_font_size = 10
+    angle = -5
+    img = Image.open(img_path)
+    draw = ImageDraw.Draw(img)
+
+    # 矩形范围的宽度和高度
+    box_width, box_height = box[2] - box[0], box[3] - box[1]
+    box_x, box_y = box[0], box[1]
+
+    font_size = initial_font_size
+    text_width, text_height = 0, 0
+    font = ImageFont.truetype(font_path, font_size)
+
+    # 增加字体大小，直到文字宽度或高度超出矩形范围
+    while True:
+        font = ImageFont.truetype(font_path, font_size)
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        text_width, text_height = (
+            text_bbox[2] - text_bbox[0],
+            text_bbox[3] - text_bbox[1],
+        )
+        if text_width > box_width or text_height > box_height:
+            font_size -= 1
+            break
+        font_size += 1
+
+    # 计算文字的起始位置以居中文字
+    x = box_x + (box_width - text_width) / 2
+    y = box_y + (box_height - text_height) / 2
+
+    # 创建一个新的透明图层来绘制旋转的文本
+    text_layer = Image.new("RGBA", img.size, (255, 255, 255, 0))
+    text_draw = ImageDraw.Draw(text_layer)
+    font = ImageFont.truetype(font_path, font_size)
+    text_draw.text((x, y), text, font=font, fill=(0, 0, 0, 255))
+
+    # 旋转文本图层
+    rotated_text_layer = text_layer.rotate(
+        angle,
+        resample=Image.Resampling.BICUBIC,
+        center=(x + text_width / 2, y + text_height / 2),
+    )
+
+    # 将旋转后的文本图层粘贴到原图像上
+    img = Image.alpha_composite(img.convert("RGBA"), rotated_text_layer)
+
+    # 转换为RGB模式以保存为PNG
+    img = img.convert("RGB")
+    output_path = os.path.join(OUTPUT_DIR, "love.png")
+    img.save(output_path, "PNG")
+
+    import base64
+    from io import BytesIO
+
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+    return img_base64
+
+
 # 群消息处理函数
-async def handle_Example_group_message(websocket, msg):
-    try:
-        user_id = str(msg.get("user_id"))
-        group_id = str(msg.get("group_id"))
-        raw_message = str(msg.get("raw_message"))
-        role = str(msg.get("sender", {}).get("role"))
-        message_id = str(msg.get("message_id"))
-
-    except Exception as e:
-        logging.error(f"处理Example群消息失败: {e}")
-        return
-
-
-# 群通知处理函数
-async def handle_Example_group_notice(websocket, msg):
-    try:
-        user_id = str(msg.get("user_id"))
-        group_id = str(msg.get("group_id"))
-        raw_message = str(msg.get("raw_message"))
-        role = str(msg.get("sender", {}).get("role"))
-        message_id = str(msg.get("message_id"))
-
-    except Exception as e:
-        logging.error(f"处理Example群通知失败: {e}")
-        return
-
-
-# 私聊消息处理函数
-async def handle_Example_private_message(websocket, msg):
-    try:
-        user_id = str(msg.get("user_id"))
-        raw_message = str(msg.get("raw_message"))
-
-    except Exception as e:
-        logging.error(f"处理xxx私聊消息失败: {e}")
-        return
-
-
-async def Example_main(websocket, msg):
-
+async def handle_ImageGenerate_group_message(websocket, msg):
     # 确保数据目录存在
-    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    await handle_Example_group_message(websocket, msg)
-    await handle_Example_group_notice(websocket, msg)
-    await handle_Example_private_message(websocket, msg)
+    try:
+        user_id = str(msg.get("user_id"))
+        group_id = str(msg.get("group_id"))
+        raw_message = str(msg.get("raw_message"))
+        role = str(msg.get("sender", {}).get("role"))
+        message_id = str(msg.get("message_id"))
+
+        if raw_message.startswith("狂粉"):
+            match = re.search(r"狂粉(.*)", raw_message)
+            if match:
+                if len(match.group(1)) <= 10 and len(match.group(1)) > 0:
+                    del_message_id = await send_group_msg_with_reply(
+                        websocket, group_id, "图片生成中..."
+                    )
+                    prompt = match.group(1)
+                    img_base64 = await add_centered_text(prompt)
+                    img_path = os.path.join(OUTPUT_DIR, "love.png")
+
+                    # # 文件
+                    # if img_path:
+                    #     await delete_msg(websocket, del_message_id)
+                    #     logging.info(f"img_path: {img_path}")
+                    #     await send_group_msg(
+                    #         websocket,
+                    #         group_id,
+                    #         {
+                    #             "type": "image",
+                    #             "data": {"file": f"file:///{img_path}"},
+                    #         },
+                    #     )
+
+                    # base64
+                    if img_base64:
+                        # logging.info(f"img_base64: {img_base64}")
+                        await send_group_msg(
+                            websocket,
+                            group_id,
+                            f"[CQ:image,file=base64://{img_base64}]",
+                        )
+                        await delete_msg(websocket, del_message_id)
+                else:
+                    await send_group_msg(
+                        websocket,
+                        group_id,
+                        f"[CQ:reply,id={message_id}]输入内容不合法，请重新输入",
+                    )
+    except Exception as e:
+        logging.error(f"处理ImageGenerate群消息失败: {e}")
+        return
