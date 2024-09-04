@@ -26,7 +26,12 @@ INPUT_DIR = os.path.join(
 
 
 # 输出图片路径
-OUTPUT_DIR = "/home/bot/app/scripts/ImageGenerate/output"
+OUTPUT_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "scripts",
+    "ImageGenerate",
+    "output",
+)
 
 
 # 查看功能开关状态
@@ -95,7 +100,7 @@ async def add_centered_text(text="W1ndys"):
     output_path = os.path.join(OUTPUT_DIR, "love.png")
     img.save(output_path, "PNG")
 
-    return True
+    return output_path
 
 
 # 群消息处理函数
@@ -118,13 +123,11 @@ async def handle_ImageGenerate_group_message(websocket, msg):
                         websocket, group_id, "图片生成中..."
                     )
                     prompt = match.group(1)
-                    # img_base64 = await add_centered_text(prompt)
-                    img_path = os.path.join(OUTPUT_DIR, "love.png")
+                    img_path = await add_centered_text(prompt)
 
                     # 文件
                     if img_path:
                         await delete_msg(websocket, del_message_id)
-                        logging.info(f"img_path: {img_path}")
                         await send_group_msg(
                             websocket,
                             group_id,
