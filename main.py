@@ -106,7 +106,7 @@ async def add_text_kf(text="W1ndys"):
 # 添加手指向上的图片文字
 async def add_text_up_hand(text="W1ndys"):
     img_path = os.path.join(INPUT_DIR, "up_hand.png")
-    box = (0, 690, 955, 946)
+    box = (30, 690, 931, 907)
     font_path = "/usr/share/fonts/truetype/win/SIMHEI.TTF"  # 使用中文字体
     initial_font_size = 10
     angle = 0
