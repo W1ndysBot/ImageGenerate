@@ -100,16 +100,24 @@ async def add_text_to_image(input_image, box, text, angle=0):
     return output_path
 
 
-# 更新后的函数调用
+# 狂粉
 async def add_text_kf(text="W1ndys"):
     img_path = os.path.join(INPUT_DIR, "love.png")
     box = (257, 21, 724, 252)
     return await add_text_to_image(img_path, box, text, angle=-5)
 
 
+# 向上竖起大拇指
 async def add_text_up_hand(text="W1ndys"):
     img_path = os.path.join(INPUT_DIR, "up_hand.png")
     box = (30, 690, 931, 907)
+    return await add_text_to_image(img_path, box, text, angle=0)
+
+
+# 源鲁杯邀请函
+async def add_text_invitation(text="Yuanloo"):
+    img_path = os.path.join(INPUT_DIR, "yuanloo.png")
+    box = (92, 655, 663, 810)
     return await add_text_to_image(img_path, box, text, angle=0)
 
 
@@ -156,6 +164,29 @@ async def handle_ImageGenerate_group_message(websocket, msg):
                     )
                     prompt = match.group(1)
                     img_path = await add_text_up_hand(prompt)
+
+                    # 文件
+                    if img_path:
+                        await delete_msg(websocket, del_message_id)
+                        await send_group_msg(
+                            websocket, group_id, f"[CQ:image,file=file://{img_path}]"
+                        )
+                else:
+                    await send_group_msg(
+                        websocket,
+                        group_id,
+                        f"[CQ:reply,id={message_id}]输入内容不合法，请重新输入",
+                    )
+
+        elif raw_message.startswith("YL邀请函"):
+            match = re.search(r"YL邀请函(.*)", raw_message)
+            if match:
+                if len(match.group(1)) <= 15 and len(match.group(1)) > 0:
+                    del_message_id = await send_group_msg_with_reply(
+                        websocket, group_id, "图片生成中..."
+                    )
+                    prompt = match.group(1)
+                    img_path = await add_text_invitation(prompt)
 
                     # 文件
                     if img_path:
