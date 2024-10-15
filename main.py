@@ -44,122 +44,73 @@ def save_function_status(group_id, status):
     save_switch(group_id, "function_status", status)
 
 
-# 狂粉添加居中文字
+# 通用的添加文字到图片的函数
+async def add_text_to_image(input_image, box, text, angle=0):
+    font_path = "/usr/share/fonts/truetype/win/SIMHEI.TTF"  # 使用中文字体
+    initial_font_size = 10
+    img = Image.open(input_image)
+    draw = ImageDraw.Draw(img)
+
+    # 矩形范围的宽度和高度
+    box_width, box_height = box[2] - box[0], box[3] - box[1]
+    box_x, box_y = box[0], box[1]
+
+    font_size = initial_font_size
+    text_width, text_height = 0, 0
+    font = ImageFont.truetype(font_path, font_size)
+
+    # 增加字体大小，直到文字宽度或高度超出矩形范围
+    while True:
+        font = ImageFont.truetype(font_path, font_size)
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        text_width, text_height = (
+            text_bbox[2] - text_bbox[0],
+            text_bbox[3] - text_bbox[1],
+        )
+        if text_width > box_width or text_height > box_height:
+            font_size -= 1
+            break
+        font_size += 1
+
+    # 计算文字的起始位置以居中文字
+    x = box_x + (box_width - text_width) / 2
+    y = box_y + (box_height - text_height) / 2
+
+    # 创建一个新的透明图层来绘制旋转的文本
+    text_layer = Image.new("RGBA", img.size, (255, 255, 255, 0))
+    text_draw = ImageDraw.Draw(text_layer)
+    font = ImageFont.truetype(font_path, font_size)
+    text_draw.text((x, y), text, font=font, fill=(0, 0, 0, 255))
+
+    # 旋转文本图层
+    rotated_text_layer = text_layer.rotate(
+        angle,
+        resample=Image.Resampling.BICUBIC,
+        center=(x + text_width / 2, y + text_height / 2),
+    )
+
+    # 将旋转后的文本图层粘贴到原图像上
+    img = Image.alpha_composite(img.convert("RGBA"), rotated_text_layer)
+
+    # 转换为RGB模式以保存为PNG
+    img = img.convert("RGB")
+    output_path = os.path.join(OUTPUT_DIR, os.path.basename(input_image))
+    img.save(output_path, "PNG")
+
+    return output_path
+
+
+# 更新后的函数调用
 async def add_text_kf(text="W1ndys"):
     img_path = os.path.join(INPUT_DIR, "love.png")
     box = (257, 21, 724, 252)
-    font_path = "/usr/share/fonts/truetype/win/SIMHEI.TTF"  # 使用中文字体
-    initial_font_size = 10
-    angle = -5
-    img = Image.open(img_path)
-    draw = ImageDraw.Draw(img)
-
-    # 矩形范围的宽度和高度
-    box_width, box_height = box[2] - box[0], box[3] - box[1]
-    box_x, box_y = box[0], box[1]
-
-    font_size = initial_font_size
-    text_width, text_height = 0, 0
-    font = ImageFont.truetype(font_path, font_size)
-
-    # 增加字体大小，直到文字宽度或高度超出矩形范围
-    while True:
-        font = ImageFont.truetype(font_path, font_size)
-        text_bbox = draw.textbbox((0, 0), text, font=font)
-        text_width, text_height = (
-            text_bbox[2] - text_bbox[0],
-            text_bbox[3] - text_bbox[1],
-        )
-        if text_width > box_width or text_height > box_height:
-            font_size -= 1
-            break
-        font_size += 1
-
-    # 计算文字的起始位置以居中文字
-    x = box_x + (box_width - text_width) / 2
-    y = box_y + (box_height - text_height) / 2
-
-    # 创建一个新的透明图层来绘制旋转的文本
-    text_layer = Image.new("RGBA", img.size, (255, 255, 255, 0))
-    text_draw = ImageDraw.Draw(text_layer)
-    font = ImageFont.truetype(font_path, font_size)
-    text_draw.text((x, y), text, font=font, fill=(0, 0, 0, 255))
-
-    # 旋转文本图层
-    rotated_text_layer = text_layer.rotate(
-        angle,
-        resample=Image.Resampling.BICUBIC,
-        center=(x + text_width / 2, y + text_height / 2),
-    )
-
-    # 将旋转后的文本图层粘贴到原图像上
-    img = Image.alpha_composite(img.convert("RGBA"), rotated_text_layer)
-
-    # 转换为RGB模式以保存为PNG
-    img = img.convert("RGB")
-    output_path = os.path.join(OUTPUT_DIR, "love.png")
-    img.save(output_path, "PNG")
-
-    return output_path
+    return await add_text_to_image(img_path, box, text, angle=-5)
 
 
-# 添加手指向上的图片文字
 async def add_text_up_hand(text="W1ndys"):
     img_path = os.path.join(INPUT_DIR, "up_hand.png")
     box = (30, 690, 931, 907)
-    font_path = "/usr/share/fonts/truetype/win/SIMHEI.TTF"  # 使用中文字体
-    initial_font_size = 10
-    angle = 0
-    img = Image.open(img_path)
-    draw = ImageDraw.Draw(img)
-
-    # 矩形范围的宽度和高度
-    box_width, box_height = box[2] - box[0], box[3] - box[1]
-    box_x, box_y = box[0], box[1]
-
-    font_size = initial_font_size
-    text_width, text_height = 0, 0
-    font = ImageFont.truetype(font_path, font_size)
-
-    # 增加字体大小，直到文字宽度或高度超出矩形范围
-    while True:
-        font = ImageFont.truetype(font_path, font_size)
-        text_bbox = draw.textbbox((0, 0), text, font=font)
-        text_width, text_height = (
-            text_bbox[2] - text_bbox[0],
-            text_bbox[3] - text_bbox[1],
-        )
-        if text_width > box_width or text_height > box_height:
-            font_size -= 1
-            break
-        font_size += 1
-
-    # 计算文字的起始位置以居中文字
-    x = box_x + (box_width - text_width) / 2
-    y = box_y + (box_height - text_height) / 2
-
-    # 创建一个新的透明图层来绘制旋转的文本
-    text_layer = Image.new("RGBA", img.size, (255, 255, 255, 0))
-    text_draw = ImageDraw.Draw(text_layer)
-    font = ImageFont.truetype(font_path, font_size)
-    text_draw.text((x, y), text, font=font, fill=(0, 0, 0, 255))
-
-    # 旋转文本图层
-    rotated_text_layer = text_layer.rotate(
-        angle,
-        resample=Image.Resampling.BICUBIC,
-        center=(x + text_width / 2, y + text_height / 2),
-    )
-
-    # 将旋转后的文本图层粘贴到原图像上
-    img = Image.alpha_composite(img.convert("RGBA"), rotated_text_layer)
-
-    # 转换为RGB模式以保存为PNG
-    img = img.convert("RGB")
-    output_path = os.path.join(OUTPUT_DIR, "love.png")
-    img.save(output_path, "PNG")
-
-    return output_path
+    return await add_text_to_image(img_path, box, text, angle=0)
 
 
 # 群消息处理函数
