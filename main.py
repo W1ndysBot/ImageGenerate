@@ -46,7 +46,7 @@ def save_function_status(group_id, status):
 
 # 通用的添加文字到图片的函数
 async def add_text_to_image(input_image, box, text, angle=0):
-    font_path = "/usr/share/fonts/truetype/win/SIMHEI.TTF"  # 使用中文字体
+    font_path = "/usr/share/fonts/truetype/win/MSYH.TTC"
     initial_font_size = 10
     img = Image.open(input_image)
     draw = ImageDraw.Draw(img)
@@ -181,7 +181,7 @@ async def handle_ImageGenerate_group_message(websocket, msg):
         elif raw_message.startswith("邀请函"):
             match = re.search(r"邀请函(.*)", raw_message)
             if match:
-                if len(match.group(1)) <= 15 and len(match.group(1)) > 0:
+                if len(match.group(1)) <= 199 and len(match.group(1)) > 0:
                     del_message_id = await send_group_msg_with_reply(
                         websocket, group_id, "图片生成中..."
                     )
