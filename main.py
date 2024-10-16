@@ -117,7 +117,7 @@ async def add_text_up_hand(text="W1ndys"):
 # 源鲁杯邀请函
 async def add_text_invitation(text="Yuanloo"):
     img_path = os.path.join(INPUT_DIR, "yuanloo.png")
-    box = (92, 655, 663, 810)
+    box = (135, 713, 626, 819)
     return await add_text_to_image(img_path, box, text, angle=0)
 
 
@@ -178,8 +178,8 @@ async def handle_ImageGenerate_group_message(websocket, msg):
                         f"[CQ:reply,id={message_id}]输入内容不合法，请重新输入",
                     )
 
-        elif raw_message.startswith("YL邀请函"):
-            match = re.search(r"YL邀请函(.*)", raw_message)
+        elif raw_message.startswith("邀请函"):
+            match = re.search(r"邀请函(.*)", raw_message)
             if match:
                 if len(match.group(1)) <= 15 and len(match.group(1)) > 0:
                     del_message_id = await send_group_msg_with_reply(
