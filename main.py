@@ -154,7 +154,7 @@ async def handle_ImageGenerate_group_message(websocket, msg):
             match = re.search(r"狂粉(.*)", raw_message)
             if match:
                 if len(match.group(1)) <= 10 and len(match.group(1)) > 0:
-                    del_message_id = await send_group_msg_with_reply(
+                    del_message_id = await send_group_msg(
                         websocket, group_id, "图片生成中..."
                     )
                     prompt = match.group(1)
@@ -176,7 +176,7 @@ async def handle_ImageGenerate_group_message(websocket, msg):
             match = re.search(r"hand(.*)", raw_message)
             if match:
                 if len(match.group(1)) <= 10 and len(match.group(1)) > 0:
-                    del_message_id = await send_group_msg_with_reply(
+                    del_message_id = await send_group_msg(
                         websocket, group_id, "图片生成中..."
                     )
                     prompt = match.group(1)
@@ -199,7 +199,7 @@ async def handle_ImageGenerate_group_message(websocket, msg):
             match = re.search(r"网安邀请函(.*)", raw_message)
             if match:
                 if len(match.group(1)) <= 6 and len(match.group(1)) > 0:
-                    del_message_id = await send_group_msg_with_reply(
+                    del_message_id = await send_group_msg(
                         websocket, group_id, "图片生成中..."
                     )
                     prompt = match.group(1)
